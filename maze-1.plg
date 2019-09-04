@@ -1,0 +1,110 @@
+<html>
+<body>
+<pre>
+<h1>µVision Build Log</h1>
+<h2>Project:</h2>
+D:\ÎÄµµ\2019Êî¼Ù\±à³Ì\maze-1\maze-1.uvproj
+Project File Date:  08/30/2019
+
+<h2>Output:</h2>
+Build target 'Target 1'
+compiling maze-1-main.c...
+compiling oled.c...
+src\oled.c(212): warning C316: unterminated conditionals
+linking...
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?PICTURE?OLED
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?_SWAP_X_Y?OLED
+Program Size: data=9.4 xdata=56 code=8479
+creating hex file from "maze-1"...
+"maze-1" - 0 Error(s), 3 Warning(s).
+Build target 'Target 1'
+compiling maze-1-main.c...
+linking...
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?PICTURE?OLED
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?_SWAP_X_Y?OLED
+Program Size: data=9.3 xdata=57 code=8517
+creating hex file from "maze-1"...
+"maze-1" - 0 Error(s), 2 Warning(s).
+Build target 'Target 1'
+compiling maze-1-main.c...
+linking...
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?PICTURE?OLED
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?_SWAP_X_Y?OLED
+Program Size: data=9.3 xdata=57 code=8520
+creating hex file from "maze-1"...
+"maze-1" - 0 Error(s), 2 Warning(s).
+Build target 'Target 1'
+compiling maze-1-main.c...
+linking...
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?PICTURE?OLED
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?_SWAP_X_Y?OLED
+Program Size: data=9.3 xdata=57 code=8521
+creating hex file from "maze-1"...
+"maze-1" - 0 Error(s), 2 Warning(s).
+Build target 'Target 1'
+compiling maze-1-main.c...
+linking...
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?PICTURE?OLED
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?_SWAP_X_Y?OLED
+Program Size: data=9.3 xdata=57 code=8516
+creating hex file from "maze-1"...
+"maze-1" - 0 Error(s), 2 Warning(s).
+Build target 'Target 1'
+compiling maze-1-main.c...
+linking...
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?PICTURE?OLED
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?_SWAP_X_Y?OLED
+Program Size: data=9.3 xdata=57 code=8514
+creating hex file from "maze-1"...
+"maze-1" - 0 Error(s), 2 Warning(s).
+Build target 'Target 1'
+compiling maze-1-main.c...
+linking...
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?PICTURE?OLED
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?_SWAP_X_Y?OLED
+Program Size: data=9.4 xdata=56 code=8482
+creating hex file from "maze-1"...
+"maze-1" - 0 Error(s), 2 Warning(s).
+Build target 'Target 1'
+linking...
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?PICTURE?OLED
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?_SWAP_X_Y?OLED
+Program Size: data=9.4 xdata=56 code=8482
+creating hex file from "maze-1"...
+"maze-1" - 0 Error(s), 2 Warning(s).
+Build target 'Target 1'
+compiling maze-1-main.c...
+linking...
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?PICTURE?OLED
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?_SWAP_X_Y?OLED
+Program Size: data=9.4 xdata=56 code=8479
+creating hex file from "maze-1"...
+"maze-1" - 0 Error(s), 2 Warning(s).
+Build target 'Target 1'
+compiling maze-1-main.c...
+linking...
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?PICTURE?OLED
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?_SWAP_X_Y?OLED
+Program Size: data=9.4 xdata=56 code=8491
+creating hex file from "maze-1"...
+"maze-1" - 0 Error(s), 2 Warning(s).

@@ -1,0 +1,444 @@
+C51 COMPILER V9.51   MAZE_1_MAIN                                                           09/04/2019 23:13:05 PAGE 1   
+
+
+C51 COMPILER V9.51, COMPILATION OF MODULE MAZE_1_MAIN
+OBJECT MODULE PLACED IN maze-1-main.obj
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE src\maze-1-main.c LARGE BROWSE DEBUG OBJECTEXTEND PRINT(.\maze-1-main.lst) 
+                    -TABS(2) OBJECT(maze-1-main.obj)
+
+line level    source
+
+   1          /**********************
+   2          myNavKey 导航按键+数字按键控制数码管
+   3          型号:STC15F2K60S2 主频:11.0592MHz
+   4          ************************/
+   5          #include <STC15F2K60S2.H>
+   6          #include <intrins.h>
+   7          #include <stdio.h>
+   8          // #include "storage.c"
+   9          #include "oled.h"
+  10          #define uint  unsigned int
+  11          #define uchar unsigned char
+  12          
+  13          /*---------宏定义---------*/
+  14          #define cstAdcPower 0X80     /*ADC电源开关*/
+  15          #define cstAdcFlag 0X10      /*当A/D转换完成后，cstAdcFlag要软件清零*/
+  16          #define cstAdcStart 0X08     /*当A/D转换完成后，cstAdcStart会自动清零，所以要开始下一�
+             -��转换，则需要置位*/
+  17          #define cstAdcSpeed90 0X60   /*ADC转换速度 90个时钟周期转换一次*/
+  18          #define cstAdcChs17 0X07     /*选择P1.7作为A/D输入*/
+  19          #define cstFocs      11059200L  //晶振频率 11059200L
+  20          #define cstBaud1     9600       //波特率
+  21          #define cstKeyMaxNum 100        //按键抖动次数
+  22          
+  23          /*---------引脚别名定义---------*/
+  24          sbit sbtLedSel = P2 ^ 3;     /*数码管和发光二极管选择位*/
+  25          sbit sbtBeep = P3 ^ 4;                  //蜂鸣器引脚
+  26          sbit Key2 = P3 ^ 3;  // 按下key2, 切换是否开启蜂鸣器
+  27          sbit Key1 = P3 ^ 2;  // 按下Key1, 切换模式
+  28          
+  29          /*---------变量定义---------*/
+  30          uchar ucSegSelectState;         /*段选标志*/
+  31          bit  btBeepFlag;                //控制蜂鸣器开关的标志位
+  32          uint cnt_sound = 0;  // 声音计次
+  33          bit beepFlag = 1;  // key3蜂鸣器开关
+  34          uint display_data_test = 0xff;
+  35          uint cnt_led = 0;  // 切换数码管和led灯的计数
+  36          uint cnt_moves = 0;
+  37          int s;  // 迷宫碰到障碍时的声音循环数
+  38          uchar maze_x, maze_y;  // 地图中人物的位置
+  39          uchar last_check = 0x81;
+  40          bit mode = 0;  // 迷宫游戏模式0, 串口手柄模式1;
+  41          
+  42          uchar duan[] = {0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, 0x7f, 0x6f, 0x77, 0x7c, 0x39, 0x5e, 0x79, 
+             -0x71}; //数码管段选，显示0-f
+  43          uchar wei[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07}; //数码管位选
+  44          uchar wei_8;
+  45          
+  46          /*收发显示数据相关*/
+  47          bit btUart1SendBusy = 0 ;
+  48          uchar ucDateTmp;               //传输数据暂存
+  49          
+  50          /*---------串口1初始化函数--------*/
+  51          void Uart1_Init( void )
+  52          {
+C51 COMPILER V9.51   MAZE_1_MAIN                                                           09/04/2019 23:13:05 PAGE 2   
+
+  53   1          AUXR = 0X80; //辅助寄存器 此时定时器0的速度是传统的12倍，不分频
+  54   1          SCON |= 0X50; //允许接收
+  55   1          TL1 = ( 65536 - ( cstFocs / 4 / cstBaud1 ) );
+  56   1          TH1 = ( 65536 - ( cstFocs / 4 / cstBaud1 ) ) >> 8;
+  57   1          AUXR |= 0X40; //辅助寄存器 此时定时器1的速度是传统的12倍，不分频
+  58   1          RI = 0;      //接收中断标志位
+  59   1          TI = 0;      //发送中断标志位
+  60   1          TR1 = 1;     //启动定时器1
+  61   1          ES = 1;      //串口中断允许位
+  62   1          EA = 1;      //总中断允许位
+  63   1          PS = 1 ;    //串口1中断高优先级
+  64   1      }
+  65          
+  66          /*---------初始化函数--------*/
+  67          void Init()
+  68          {
+  69   1          P0M1 = 0x00;
+  70   1          P0M0 = 0xff;
+  71   1          P2M1 = 0x00;
+  72   1          P2M0 = 0xff;
+  73   1      
+  74   1          P1ASF = 0x80;       //P1.7作为模拟功能A/D使用
+  75   1          ADC_RES = 0;        //转换结果清零
+  76   1          ADC_CONTR = 0x8F;   //cstAdcPower = 1
+  77   1          CLK_DIV = 0X00;     //ADRJ = 0    ADC_RES存放高八位结果
+  78   1      
+  79   1          IT0 = 0;            //设置IT0上升沿触发
+  80   1          IT1 = 0;
+  81   1      
+  82   1          AUXR |= 0x80;                       //定时器时钟1T模式
+  83   1          TMOD &= 0xF0;                       //设置定时器模式为16位自动重装
+  84   1          // TL0 = 0xCD;                         //设置定时初值
+  85   1          // TH0 = 0xF4;                         //设置定时初值
+  86   1          TF0 = 0;                            //清除TF0标志
+  87   1          TR0 = 1;                            //定时器0开始计时
+  88   1      
+  89   1          Uart1_Init();   //外部中断：低优先级
+  90   1      
+  91   1          btBeepFlag = 0;
+  92   1          P0 = 0x00;                          //数码管和LED显示清零
+  93   1      
+  94   1          sbtBeep = 0;                        //蜂鸣器引脚置0，以保护蜂鸣器
+  95   1          ET0 = 1;
+  96   1          EA = 1;
+  97   1      
+  98   1          sbtLedSel = 0;  // 用数码管显示
+  99   1      }
+ 100          
+ 101          /*---------发送数据函数--------*/
+ 102          void SendData( unsigned char dat )
+ 103          {
+ 104   1          while( btUart1SendBusy ); //发送单个字符给UART1以发送到PC机
+ 105   1          btUart1SendBusy = 1;
+ 106   1          SBUF = dat;
+ 107   1      }
+ 108          
+ 109          /*---------串口1中断处理函数--------*/
+ 110          void Uart1_Process() interrupt 4 using 1
+ 111          {
+ 112   1          if( RI )         //接受完数据后 RI自动制1
+ 113   1          {
+ 114   2              RI = 0;   ucDateTmp = SBUF;
+C51 COMPILER V9.51   MAZE_1_MAIN                                                           09/04/2019 23:13:05 PAGE 3   
+
+ 115   2          }
+ 116   1          if( TI )        //发送完数据后 RI自动制1
+ 117   1          {
+ 118   2              TI = 0;   btUart1SendBusy = 0;
+ 119   2          }
+ 120   1      }
+ 121          
+ 122          /* 数码管显示两个数据, 一个数字*/
+ 123          void display(uint data1, uint data2) {
+ 124   1          wei_8++;
+ 125   1          if (wei_8 == 8) wei_8 = 0;
+ 126   1          P0 = 0x00;
+ 127   1          P2 = wei[wei_8];
+ 128   1          switch (wei_8) {
+ 129   2              case 0:
+ 130   2                  P0 = duan[(data1 / 1000) % 10]; break;
+ 131   2              case 1:
+ 132   2                  P0 = duan[(data1 / 100) % 10]; break;
+ 133   2              case 2:
+ 134   2                  P0 = duan[(data1 / 10) % 10]; break;
+ 135   2              case 3:
+ 136   2                  P0 = duan[data1 % 10]; break;
+ 137   2              case 4:
+ 138   2                  P0 = duan[(data2 / 1000) % 10]; break;
+ 139   2              case 5:
+ 140   2                  P0 = duan[(data2 / 100) % 10]; break;
+ 141   2              case 6:
+ 142   2                  P0 = duan[(data2 / 10) % 10]; break;
+ 143   2              case 7:
+ 144   2                  P0 = duan[data2 % 10]; break;
+ 145   2          }
+ 146   1      }
+ 147          
+ 148          /*---------延时5ms子函数--------*/
+ 149          void Delay5ms()     //@11.0592MHz  延时5ms
+ 150          {
+ 151   1          unsigned char i, j;
+ 152   1          i = 54;
+ 153   1          j = 199;
+ 154   1          do
+ 155   1          {
+ 156   2              while ( --j );
+ 157   2          }
+ 158   1          while ( --i );
+ 159   1      }
+ 160          
+ 161          /*---------延时100ms子函数--------*/
+ 162          void Delay100ms()       //@11.0592MHz  延时100ms
+ 163          {
+ 164   1          unsigned char i, j, k;
+ 165   1          _nop_();
+ 166   1          _nop_();
+ 167   1          i = 5;
+ 168   1          j = 52;
+ 169   1          k = 195;
+ 170   1          do
+ 171   1          {
+ 172   2              do
+ 173   2              {
+ 174   3                  while ( --k );
+ 175   3              }
+ 176   2              while ( --j );
+C51 COMPILER V9.51   MAZE_1_MAIN                                                           09/04/2019 23:13:05 PAGE 4   
+
+ 177   2          }
+ 178   1          while ( --i );
+ 179   1      }
+ 180          
+ 181          /*---------延时子函数--------*/
+ 182          void DelayMs( uint xms )  // 1ms
+ 183          {
+ 184   1          uchar i;
+ 185   1          for( ; xms > 0; xms-- )
+ 186   1              for( i = 114; i > 0; i-- )
+ 187   1              {
+ 188   2                  ;
+ 189   2              }
+ 190   1      }
+ 191          
+ 192          /*---------获取AD值子函数--------*/
+ 193          unsigned char GetADC()
+ 194          {
+ 195   1          uchar ucAdcRes;
+ 196   1          ADC_CONTR = cstAdcPower | cstAdcStart | cstAdcSpeed90 | cstAdcChs17;//没有将cstAdcFlag置1，用于
+             -判断A/D是否结束
+ 197   1          _nop_();
+ 198   1          _nop_();
+ 199   1          _nop_();
+ 200   1          _nop_();
+ 201   1          while( !( ADC_CONTR & cstAdcFlag ) ); //等待直到A/D转换结束
+ 202   1          ADC_CONTR &= ~cstAdcFlag;           //cstAdcFlagE软件清0
+ 203   1          ucAdcRes = ADC_RES;                 //获取AD的值
+ 204   1          return ucAdcRes;
+ 205   1      }
+ 206          
+ 207          /*---------获取导航按键值子函数--------*/
+ 208          uchar NavKeyCheck()
+ 209          {
+ 210   1          unsigned char key;
+ 211   1          key = GetADC();     //获取AD的值
+ 212   1          if( key != 255 )    //有按键按下时
+ 213   1          {
+ 214   2              Delay5ms();
+ 215   2              key = GetADC();
+ 216   2              if( key != 255 )            //按键消抖 仍有按键按下
+ 217   2              {
+ 218   3                  key = key & 0xE0;       //获取高3位，其他位清零
+ 219   3                  key = _cror_( key, 5 ); //循环右移5位 获取A/D转换高三位值，减小误差
+ 220   3                  return key;
+ 221   3              }
+ 222   2          }
+ 223   1          return 0x07;        //没有按键按下时返回值0x07
+ 224   1      }
+ 225          
+ 226          void MakeSound(uint num) {
+ 227   1          if (beepFlag == 1) {
+ 228   2              btBeepFlag = 1;
+ 229   2              TH0 = 0xF4 - num;
+ 230   2          }
+ 231   1      }
+ 232          
+ 233          /*---------导航按键处理子函数--------*/
+ 234          void NavKey_Process()
+ 235          {
+ 236   1          uchar ucNavKeyCurrent;  //导航按键当前的状态
+ 237   1          uchar ucNavKeyPast;     //导航按键前一个状态
+C51 COMPILER V9.51   MAZE_1_MAIN                                                           09/04/2019 23:13:05 PAGE 5   
+
+ 238   1      
+ 239   1          ucNavKeyCurrent = NavKeyCheck();    //获取当前ADC值
+ 240   1          if( ucNavKeyCurrent != 0x07 )       //导航按键是否被按下 不等于0x07表示有按下
+ 241   1          {
+ 242   2              ucNavKeyPast = ucNavKeyCurrent;
+ 243   2              while( ucNavKeyCurrent != 0x07 )        //等待导航按键松开
+ 244   2                  ucNavKeyCurrent = NavKeyCheck();
+ 245   2      
+ 246   2              MakeSound(0);
+ 247   2              display_data_test = ucNavKeyPast;
+ 248   2              SendData( ucNavKeyPast ) ;
+ 249   2              cnt_moves++;
+ 250   2              switch( ucNavKeyPast )
+ 251   2              {
+ 252   3                  case 0x05 :                     //上键：显示的数字加1
+ 253   3                      last_check = checkDot(maze_x - 2, maze_y);
+ 254   3                      if (last_check == 0) {
+ 255   4                          last_check = 0xf2;
+ 256   4                          maze_x -= 2;
+ 257   4                      } else {
+ 258   4                          for (s = 0; s < 3; ++s) {
+ 259   5                              if (mode == 0)
+ 260   5                              MakeSound(s);
+ 261   5                              DelayMs(3000);
+ 262   5                          }
+ 263   4                      }
+ 264   3                      if( ucSegSelectState == 31 )
+ 265   3                      {
+ 266   4                          ucSegSelectState = 0;
+ 267   4                      }
+ 268   3                      else
+ 269   3                          ucSegSelectState++;
+ 270   3                      break;
+ 271   3                  case 0x02 :                     //下键：显示的数字减1
+ 272   3                      last_check = checkDot(maze_x + 2, maze_y);
+ 273   3                      if (last_check == 0) {
+ 274   4                          last_check = 0xf3;
+ 275   4                          maze_x += 2;
+ 276   4                      } else {
+ 277   4                          for (s = 0; s < 3; ++s) {
+ 278   5                              if (mode == 0)
+ 279   5                              MakeSound(s);
+ 280   5                              DelayMs(3000);
+ 281   5                          }
+ 282   4                      }
+ 283   3                      if( ucSegSelectState == 0 )
+ 284   3                          ucSegSelectState = 31;
+ 285   3                      else
+ 286   3                          ucSegSelectState--;
+ 287   3                      break;
+ 288   3                  case 0x04:
+ 289   3                      last_check = checkDot(maze_x, maze_y - 2);
+ 290   3                      if (last_check == 0) {
+ 291   4                          last_check = 0xf4;
+ 292   4                          maze_y -= 2;
+ 293   4                      } else {
+ 294   4                          
+ 295   4                          for (s = 0; s < 3; ++s) {
+ 296   5                              if (mode == 0)
+ 297   5                              MakeSound(s);
+ 298   5                              DelayMs(3000);
+ 299   5                          }
+C51 COMPILER V9.51   MAZE_1_MAIN                                                           09/04/2019 23:13:05 PAGE 6   
+
+ 300   4                      }
+ 301   3                      ucSegSelectState *= 2;
+ 302   3                      break;
+ 303   3                  case 0x01:
+ 304   3                      last_check = checkDot(maze_x, maze_y + 2);  // 右
+ 305   3                      if (last_check == 0) {
+ 306   4                          last_check = 0xf1;
+ 307   4                          maze_y += 2;
+ 308   4                      } else {
+ 309   4                          for (s = 0; s < 3; ++s) {
+ 310   5                              if (mode == 0)
+ 311   5                              MakeSound(s);
+ 312   5                              DelayMs(3000);
+ 313   5                          }
+ 314   4                      }
+ 315   3                      // 似乎要判断是否等于某个数, 而不是直接把函数作为条件判断?!
+ 316   3                      // if (checkDot(maze_x, maze_y + 2)) {
+ 317   3      
+ 318   3                      // } else maze_y += 2;
+ 319   3                      // maze_y += 2;
+ 320   3                      ucSegSelectState /= 2;
+ 321   3                      break;
+ 322   3              }
+ 323   2          }
+ 324   1          if (maze_x == 60 && maze_y == 126) {
+ 325   2              for (s = 0; s < 10; ++s) {
+ 326   3                  MakeSound(s);
+ 327   3                  DelayMs(5000);
+ 328   3              }
+ 329   2              maze_y += 2;
+ 330   2          }
+ 331   1          P0 = ucSegSelectState;
+ 332   1          // P0 = beepFlag;
+ 333   1      
+ 334   1          Delay100ms();
+ 335   1      }
+ 336          
+ 337          /*---------T0定时器中断服务处理函数--------*/
+ 338          void T0_Process() interrupt 1
+ 339          {
+ 340   1          if( btBeepFlag)
+ 341   1          {
+ 342   2              sbtBeep = ~sbtBeep;            //产生方波使得蜂鸣器发声
+ 343   2          }
+ 344   1          else
+ 345   1              sbtBeep = 0;                  //如果开关关闭,则蜂鸣器断电以保护蜂鸣器
+ 346   1          cnt_sound++;
+ 347   1          if (cnt_sound == 444) {
+ 348   2              btBeepFlag = 0;
+ 349   2              cnt_sound = 0;
+ 350   2          }
+ 351   1      
+ 352   1          cnt_led++;
+ 353   1          if (cnt_led >= 10) {
+ 354   2              sbtLedSel = 1;
+ 355   2              // P0 = ucSegSelectState;
+ 356   2              if (mode == 0) {
+ 357   3                  P0 = 0x00;
+ 358   3              } else if (mode == 1) {
+ 359   3                  P0 = 0xff;
+ 360   3              }
+ 361   2              if (cnt_led >= 10) cnt_led = 0;
+C51 COMPILER V9.51   MAZE_1_MAIN                                                           09/04/2019 23:13:05 PAGE 7   
+
+ 362   2          } else {
+ 363   2              sbtLedSel = 0;
+ 364   2              if (mode == 0) {
+ 365   3                  display(cnt_moves, 00);  // 显示数字
+ 366   3              } else if (mode == 1) display(display_data_test, 0x00);
+ 367   2          }
+ 368   1      }
+ 369          
+ 370          /*---------主函数--------*/
+ 371          void main()
+ 372          {
+ 373   1          Init();
+ 374   1          Initial_M096128x64_ssd1306(); // 显示初始化
+ 375   1      
+ 376   1          Delay_1ms(5);
+ 377   1          fill_picture(0xff);
+ 378   1          P0 = 0x00;
+ 379   1          MakeSound(5);
+ 380   1          maze_x = 2, maze_y = 0;
+ 381   1          mode = 0; // 游戏模式
+ 382   1          // maze_x = 58, maze_y = 124;
+ 383   1          while( 1 ) {
+ 384   2              if (mode == 0) {
+ 385   3                  showMap();
+ 386   3                  showDot(maze_x, maze_y);
+ 387   3              } else if (mode == 1) {
+ 388   3                  fill_picture(0x00);
+ 389   3              }
+ 390   2              
+ 391   2              if (Key2 == 0) {
+ 392   3                  DelayMs(50);
+ 393   3                  if (Key2 == 0) {
+ 394   4                      beepFlag = ~beepFlag;
+ 395   4                  }
+ 396   3              }
+ 397   2              if (Key1 == 0) {
+ 398   3                  DelayMs(50);
+ 399   3                  if (Key1 == 0) {
+ 400   4                      mode = ~mode;
+ 401   4                  }
+ 402   3              }
+ 403   2              NavKey_Process();         //获取按键按下情况
+ 404   2          }
+ 405   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1261    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     40       2
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      4    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

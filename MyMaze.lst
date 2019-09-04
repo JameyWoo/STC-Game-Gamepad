@@ -1,0 +1,114 @@
+C51 COMPILER V9.51   MYMAZE                                                                08/29/2019 09:53:55 PAGE 1   
+
+
+C51 COMPILER V9.51, COMPILATION OF MODULE MYMAZE
+OBJECT MODULE PLACED IN MyMaze.obj
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE src\MyMaze.c LARGE BROWSE DEBUG OBJECTEXTEND PRINT(.\MyMaze.lst) TABS(2) OB
+                    -JECT(MyMaze.obj)
+
+line level    source
+
+   1          //#include <stdio.h>
+   2          //#include <stdlib.h>
+   3          #define uchar unsigned char
+   4          
+   5          void CreateMaze() {
+   6   1        // int row = 32, col = 64;
+   7   1        //srand(42);
+   8   1        // unsigned char Maze[64][64] = { 0 };
+   9   1        // int dirs[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+  10   1       
+  11   1        // //最外围设置为路，可以有效的保护里面一层墙体，并防止挖出界
+  12   1        // int i, j;
+  13   1        // for (i = 0; i < row; ++i)
+  14   1        //  Maze[i][0] = Maze[i][col - 1] = 1;
+  15   1        // for (i = 0; i < col; ++i)
+  16   1        //  Maze[0][i] = Maze[row - 1][i] = 1;
+  17   1       
+  18   1        // //墙队列，包括X , Y
+  19   1        // unsigned char X[16*32] = {};
+  20   1        // unsigned char Y[16*32] = {};
+  21   1        // unsigned int top = 0; // top 位是没有数据的, 也就是它代表队列中元素的数量 
+  22   1       
+  23   1        // //任取初始值
+  24   1        // X[top] = 2; 
+  25   1        // Y[top++] = 2;
+  26   1       
+  27   1        // //当墙队列为空时结束循环
+  28   1        // while (top) {
+  29   1        //  if (top > 16*32) printf("top = %d\n", top);
+  30   1        //  //在墙队列中随机取一点
+  31   1        //  int r = rand() % top;
+  32   1        //  int x = X[r];
+  33   1        //  int y = Y[r];
+  34   1       
+  35   1        //  //判读上下左右四个方向是否为路
+  36   1        //  int count = 0;
+  37   1        //  for (i = 0; i < 4; ++i) {
+  38   1        //    if (Maze[x + dirs[i][0]][y + dirs[i][1]] > 0) ++count;
+  39   1        //  }
+  40   1       
+  41   1        //  if (count <= 1) {
+  42   1        //    Maze[x][y] = 1;
+  43   1        //    for (i = x - 1; i < x + 2; i++) {
+  44   1        //      for (j = y - 1; j < y + 2; j++) {
+  45   1        //        if (abs(x - i) + abs(y - j) == 1 && Maze[i][j] == 0) {
+  46   1        //          X[top] = i;
+  47   1        //          Y[top++] = j;
+  48   1        //        }
+  49   1        //      }
+  50   1        //    }
+  51   1        //  }
+  52   1       
+  53   1        //  //删除当前墙
+  54   1        //  top--;
+C51 COMPILER V9.51   MYMAZE                                                                08/29/2019 09:53:55 PAGE 2   
+
+  55   1        //  swap_x_y(&X[r], &X[top]);
+  56   1        //  swap_x_y(&Y[r], &Y[top]);
+  57   1        // }
+  58   1       
+  59   1        // //设置迷宫进出口
+  60   1        // Maze[2][1] = 1;
+  61   1        // for (i = row - 3; i >= 0; i--) {
+  62   1        //  if (Maze[i][col - 3] == 1) { 
+  63   1        //    Maze[i][col - 2] = 1;
+  64   1        //    break;
+  65   1        //  }
+  66   1        // }
+  67   1        // int k;
+  68   1        // int maze[64][128] = {};
+  69   1        // for (i = 0; i < row; ++i) {
+  70   1        //  for (j = 0; j < col; ++j) {
+  71   1        //    maze[2*i + 0][2*j + 0] = maze[2*i + 1][2*j + 0] = 
+  72   1        //    maze[2*i + 0][2*j + 1] = maze[2*i + 1][2*j + 1] = Maze[i][j];
+  73   1        //  }
+  74   1        // }
+  75   1        // top = 0;
+  76   1        // int maze_map[1024];
+  77   1        // for (i = 0; i < 8; ++i) {
+  78   1        //  int i8 = 8*i;
+  79   1        //  for (j = 0; j < 128; ++j) {
+  80   1        //    int ch = 0;
+  81   1        //    for (k = i8 + 7; k >= i8; --k) {
+  82   1        //      int bi = (k - i8);
+  83   1        //      ch |= ((!maze[k][j]) << bi);
+  84   1        //    }
+  85   1        //    maze_map[top++] = ch;
+  86   1        //  }
+  87   1        // }
+  88   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =      1    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
